@@ -1,0 +1,118 @@
+#
+# 全容器化运行微信开发者工具：
+# - build 阶段：在官方 build 镜像内完成 node/nwjs/工具包下载、补丁、重编译
+# - runtime 阶段：仅保留运行所需文件 + 运行时依赖库，体积更小
+#
+
+ARG BUILD_IMAGE=msojocs/wechat-devtools-build:v1.0.6
+
+FROM ${BUILD_IMAGE} AS build
+
+WORKDIR /workspace
+
+# 代理支持：docker build 时可通过 --build-arg 传入（如 all_proxy=http://... / socks5h://...）
+ARG http_proxy
+ARG https_proxy
+ARG all_proxy
+ARG no_proxy
+ARG npm_config_proxy
+ARG npm_config_https_proxy
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG ALL_PROXY
+ARG NO_PROXY
+
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
+ENV all_proxy=${all_proxy}
+ENV no_proxy=${no_proxy}
+ENV npm_config_proxy=${npm_config_proxy}
+ENV npm_config_https_proxy=${npm_config_https_proxy}
+ENV HTTP_PROXY=${HTTP_PROXY}
+ENV HTTPS_PROXY=${HTTPS_PROXY}
+ENV ALL_PROXY=${ALL_PROXY}
+ENV NO_PROXY=${NO_PROXY}
+
+# 复制仓库到镜像中（不再依赖宿主机挂载目录）
+COPY . /workspace
+
+# 在镜像内完成全部安装/构建流程
+# 可通过 docker build --build-arg SETUP_ARGS="version=latest" 传参
+ARG SETUP_ARGS=
+ENV ACTION_MODE=true
+RUN bash ./tools/setup-wechat-devtools.sh ${SETUP_ARGS}
+
+
+FROM ubuntu:22.04 AS runtime
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    locales \
+    fontconfig \
+    fonts-noto-cjk \
+    fonts-wqy-zenhei \
+    # GUI/NWJS/Chromium runtime deps（按需增补）
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatomic1 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libexpat1 \
+    libgbm1 \
+    libglib2.0-0 \
+    libgl1 \
+    libgl1-mesa-dri \
+    libgtk-3-0 \
+    libcurl4 \
+    libnspr4 \
+    libnss3 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxkbfile1 \
+    libxkbcommon0 \
+    libxrandr2 \
+    libxrender1 \
+    libxshmfence1 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen zh_CN.UTF-8
+ENV LANG=zh_CN.UTF-8
+ENV LC_ALL=zh_CN.UTF-8
+ENV LANGUAGE=zh_CN:zh
+ENV LC_CTYPE=zh_CN.UTF-8
+
+# 运行目录
+ENV WECHAT_DEVTOOLS_HOME=/opt/wechat-devtools
+RUN mkdir -p ${WECHAT_DEVTOOLS_HOME}
+
+# 从 build 阶段拷贝产物（包含 node/nwjs/package.nw）
+COPY --from=build /workspace/node ${WECHAT_DEVTOOLS_HOME}/node
+COPY --from=build /workspace/nwjs ${WECHAT_DEVTOOLS_HOME}/nwjs
+COPY --from=build /workspace/package.nw ${WECHAT_DEVTOOLS_HOME}/package.nw
+
+# 容器内启动脚本
+COPY docker/entrypoint.sh /usr/local/bin/wechat-devtools
+RUN chmod +x /usr/local/bin/wechat-devtools
+
+# 非 root 用户，避免把配置写到 /root
+RUN useradd -m -s /bin/bash user
+USER user
+
+# 默认将配置写到 /home/user/.config 下（可通过挂载卷持久化）
+WORKDIR /home/user
+
+ENTRYPOINT ["/usr/local/bin/wechat-devtools"]

@@ -93,8 +93,16 @@ mkdir -p "$root_dir/cache"
 # TODO: loongarch64版本
 # 文件不存在，下载
 if [ ! -f "$ripgrep_path" ];then
-  wget https://github.com/microsoft/ripgrep-prebuilt/releases/download/v${ripgrep_version}/ripgrep-v${ripgrep_version}-x86_64-unknown-linux-musl.tar.gz \
-  -O "${ripgrep_path}.tmp"
+  # GitHub 下载在部分网络环境里 wget 可能会偶发 TLS 失败，改用 curl + 重试更稳
+  # 可选：通过环境变量 GITHUB_PROXY_PREFIX 指定代理前缀（例如 https://ghproxy.com/ ），用于加速/兜底
+  ripgrep_url="https://github.com/microsoft/ripgrep-prebuilt/releases/download/v${ripgrep_version}/ripgrep-v${ripgrep_version}-x86_64-unknown-linux-musl.tar.gz"
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    ripgrep_url="${GITHUB_PROXY_PREFIX}${ripgrep_url}"
+  fi
+
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 15 \
+    -o "${ripgrep_path}.tmp" \
+    "$ripgrep_url"
   mv "${ripgrep_path}.tmp" "${ripgrep_path}"
 fi
 tar xvf "$ripgrep_path" -C ../bin && \

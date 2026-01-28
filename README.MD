@@ -97,6 +97,39 @@
 
 之后即可通过点击应用图标启动微信开发者工具，也可以运行 `bin/wechat-devtools` 通过命令行启动
 
+## 方法0.5（全容器化运行：宿主机仅需 Docker）
+
+此方法会在**镜像内**完成 node/nwjs/微信开发者工具包的下载、补丁、重编译，并在**容器内运行 GUI**。宿主机无需安装 node/python 等依赖。
+
+> 注意：
+> - GUI 转发依赖你的桌面环境；默认走 X11。若遇到黑屏/无法启动，通常需要先允许本地容器访问 X 服务（例如使用 `xhost`）。
+> - 配置与缓存会持久化到项目目录的 `./.docker-config/`。
+> - 如遇到“扩展出错/界面乱码”，通常是运行时缺少依赖库或中文字体；`docker/Dockerfile.runtime` 已包含常见依赖与中文字体（`fonts-noto-cjk` / `fonts-wqy-zenhei`）。
+
+1. 构建运行镜像（第一次较慢）：
+
+   ```
+   tools/run-wechat-devtools-docker.sh --build
+   ```
+
+2. 运行（会弹出微信开发者工具界面）：
+
+   ```
+   tools/run-wechat-devtools-docker.sh
+   ```
+
+3. 如果构建阶段下载 GitHub 资源很慢/超时，建议使用本机 HTTP 代理（按需修改端口）：
+
+   ```
+   WECHAT_DEVTOOLS_PROXY=http://localhost:8118 tools/run-wechat-devtools-docker.sh --build
+   ```
+
+3. 若 X11 权限不足（常见报错：cannot open display），可尝试在宿主机执行（自行评估安全风险）：
+
+   ```
+   xhost +local:
+   ```
+
 ## 方法1
 
 由于使用到 `node-gyp` `nw-gyp`，此方法会受 `python`、`node` 版本影响出现一些难以预料的异常（比如使用 `node15.0.1` 时，大部分模块构建会被忽略，但没有任何报错信息）。但是，`Docker` 构建方式会帮你处理好这些问题。

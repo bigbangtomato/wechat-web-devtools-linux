@@ -17,24 +17,48 @@ fi
 
 mkdir -p "${srcdir}/cache/compiler/v${compiler_version}"
 if [ ! -f "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}" ];then
-  wget -c "https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcc-${arch}" -O "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.tmp"
+  url="https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcc-${arch}"
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    url="${GITHUB_PROXY_PREFIX}${url}"
+  fi
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 600 \
+    -o "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.tmp" \
+    "$url"
   mv "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.tmp" "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}"
   chmod +x "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}"
 fi
 
 if [ ! -f "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}" ];then
-  wget -c "https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcsc-${arch}" -O "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.tmp"
+  url="https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcsc-${arch}"
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    url="${GITHUB_PROXY_PREFIX}${url}"
+  fi
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 600 \
+    -o "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.tmp" \
+    "$url"
   mv "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.tmp" "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}"
   chmod +x "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}"
 fi
 
 if [ ! -f "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.node" ];then
-  wget -c "https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcc-${arch}.node" -O "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.node.tmp"
+  url="https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcc-${arch}.node"
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    url="${GITHUB_PROXY_PREFIX}${url}"
+  fi
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 600 \
+    -o "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.node.tmp" \
+    "$url"
   mv "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.node.tmp" "${srcdir}/cache/compiler/v${compiler_version}/wcc-${arch}.node"
 fi
 
 if [ ! -f "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.node" ];then
-  wget -c "https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcsc-${arch}.node" -O "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.node.tmp"
+  url="https://github.com/msojocs/wx-compiler/releases/download/v${compiler_version}/wcsc-${arch}.node"
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    url="${GITHUB_PROXY_PREFIX}${url}"
+  fi
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 600 \
+    -o "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.node.tmp" \
+    "$url"
   mv "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.node.tmp" "${srcdir}/cache/compiler/v${compiler_version}/wcsc-${arch}.node"
 fi
 
@@ -56,7 +80,13 @@ nw_version=$(node "$root_dir/tools/parse-config.js" --get-nwjs-version $@)
 # 修复视频无法播放
 if [ "$arch" == "x64" ];then
   if [ ! -f "${srcdir}/cache/libffmpeg-${nw_version}-linux-x64.zip" ];then
-    wget -c https://github.com/nwjs-ffmpeg-prebuilt/nwjs-ffmpeg-prebuilt/releases/download/${nw_version}/${nw_version}-linux-x64.zip -O "${srcdir}/cache/libffmpeg-${nw_version}-linux-x64.zip.tmp"
+    url="https://github.com/nwjs-ffmpeg-prebuilt/nwjs-ffmpeg-prebuilt/releases/download/${nw_version}/${nw_version}-linux-x64.zip"
+    if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+      url="${GITHUB_PROXY_PREFIX}${url}"
+    fi
+    curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 1200 \
+      -o "${srcdir}/cache/libffmpeg-${nw_version}-linux-x64.zip.tmp" \
+      "$url"
     mv "${srcdir}/cache/libffmpeg-${nw_version}-linux-x64.zip.tmp" "${srcdir}/cache/libffmpeg-${nw_version}-linux-x64.zip"
   fi
   rm -rf "${nwjs_dir}/lib/libffmpeg.so"
@@ -66,7 +96,13 @@ fi
 # Skyline解析插件修复
 float_pigment_version="continuous"
 if [ ! -f "${srcdir}/cache/float-pigment-${float_pigment_version}.node" ];then
-  wget -c "https://github.com/msojocs/float-pigment-rust/releases/download/${float_pigment_version}/float-pigment.linux-x64-gnu.node" -O "${srcdir}/cache/float-pigment-${float_pigment_version}.node.tmp"
+  url="https://github.com/msojocs/float-pigment-rust/releases/download/${float_pigment_version}/float-pigment.linux-x64-gnu.node"
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    url="${GITHUB_PROXY_PREFIX}${url}"
+  fi
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 600 \
+    -o "${srcdir}/cache/float-pigment-${float_pigment_version}.node.tmp" \
+    "$url"
   mv "${srcdir}/cache/float-pigment-${float_pigment_version}.node.tmp" "${srcdir}/cache/float-pigment-${float_pigment_version}.node"
 fi
 rm "${package_dir}/node_modules/node-float-pigment-css/float-pigment-css-for-nodejs.node" "${package_dir}/node_modules/node-float-pigment-css/float-pigment-css-for-nwjs.node"

@@ -9,7 +9,12 @@ file_name=$(basename "$nwjs_url")
 # download
 local_path="$root_dir/cache/$file_name"
 if [ ! -f "$local_path" ]; then
-    wget -c -O "$local_path.tmp" "$nwjs_url"
+    if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+        nwjs_url="${GITHUB_PROXY_PREFIX}${nwjs_url}"
+    fi
+    curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 1200 \
+        -o "$local_path.tmp" \
+        "$nwjs_url"
     mv "$local_path.tmp" "$local_path"
 fi
 # extract

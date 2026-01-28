@@ -15,6 +15,7 @@ appimage-builder-cache
 wcc.bin
 wcsc.bin
 temp.sh
+.docker-config
 # flatpak
 .flatpak-builder
 build-dir

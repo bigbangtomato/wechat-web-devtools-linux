@@ -28,7 +28,14 @@ file_name=$(basename $url)
 localPath="$cache_dir/${file_name}"
 if [ ! -f $localPath ];then
   # 不存在，下载
-  wget -c $url -O${localPath}.tmp
+  # 使用 curl（支持 http(s)_proxy/all_proxy，且更稳）
+  # 可选：GITHUB_PROXY_PREFIX 作为 URL 前缀代理（例如 https://ghproxy.com/）
+  if [ -n "${GITHUB_PROXY_PREFIX:-}" ]; then
+    url="${GITHUB_PROXY_PREFIX}${url}"
+  fi
+  curl -fL --retry 6 --retry-delay 2 --connect-timeout 20 --max-time 1200 \
+    -o "${localPath}.tmp" \
+    "$url"
   mv ${localPath}.tmp ${localPath}
 fi
 
