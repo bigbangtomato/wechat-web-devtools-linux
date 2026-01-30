@@ -16,6 +16,7 @@ wcc.bin
 wcsc.bin
 temp.sh
 .docker-config
+.docker-local-config
 # flatpak
 .flatpak-builder
 build-dir
