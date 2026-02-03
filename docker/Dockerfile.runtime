@@ -52,8 +52,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     locales \
     fontconfig \
+    # 中文字体
     fonts-noto-cjk \
     fonts-wqy-zenhei \
+    # 符号/图标字体（解决图标显示为x的问题）
+    fonts-noto-core \
+    fonts-noto-color-emoji \
+    fonts-dejavu-core \
+    fonts-liberation \
     # GUI/NWJS/Chromium runtime deps（按需增补）
     libasound2 \
     libatk-bridge2.0-0 \
@@ -87,7 +93,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxss1 \
     libxtst6 \
     xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && fc-cache -fv
 
 RUN locale-gen zh_CN.UTF-8
 ENV LANG=zh_CN.UTF-8
