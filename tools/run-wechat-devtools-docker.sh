@@ -83,13 +83,23 @@ fi
 
 # 优先 Wayland（存在 WAYLAND_DISPLAY 时尝试），否则走 X11
 docker_args=()
+runtime_dir_mounted=false
+
+mount_runtime_dir() {
+  if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -d "${XDG_RUNTIME_DIR}" ] && [ "$runtime_dir_mounted" != "true" ]; then
+    docker_args+=(
+      -e "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}"
+      -v "${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}:rw"
+    )
+    runtime_dir_mounted=true
+  fi
+}
 
 if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -S "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]; then
   # Wayland（实验性）：部分环境仍可能需要 XWayland
+  mount_runtime_dir
   docker_args+=(
     -e "WAYLAND_DISPLAY=${WAYLAND_DISPLAY}"
-    -e "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}"
-    -v "${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}"
   )
 fi
 
@@ -109,6 +119,33 @@ if [ -n "${DISPLAY:-}" ] && [ -S "/tmp/.X11-unix/X0" ]; then
     )
   fi
 fi
+
+# 透传宿主机 ibus 会话环境，适配 ibus + rime 等输入法方案
+if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -d "${XDG_RUNTIME_DIR}" ]; then
+  mount_runtime_dir
+  if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    docker_args+=(-e "DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS}")
+  elif [ -S "${XDG_RUNTIME_DIR}/bus" ]; then
+    docker_args+=(-e "DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/bus")
+  fi
+fi
+host_ibus_address="$(ibus address 2>/dev/null || true)"
+if [ -n "$host_ibus_address" ] && [ "$host_ibus_address" != "(null)" ]; then
+  docker_args+=(-e "IBUS_ADDRESS=${host_ibus_address}")
+  if echo "$host_ibus_address" | grep -Eq '^unix:path='; then
+    ibus_socket_path="${host_ibus_address#unix:path=}"
+    ibus_socket_path="${ibus_socket_path%%,*}"
+    ibus_socket_dir="$(dirname "$ibus_socket_path")"
+    if [ -d "$ibus_socket_dir" ]; then
+      docker_args+=(-v "${ibus_socket_dir}:${ibus_socket_dir}:rw")
+    fi
+  fi
+fi
+docker_args+=(
+  -e "GTK_IM_MODULE=ibus"
+  -e "QT_IM_MODULE=ibus"
+  -e "XMODIFIERS=@im=ibus"
+)
 
 # 常见 Chromium/NWJS 运行建议
 docker_args+=(
@@ -157,6 +194,7 @@ exec docker run "${tty_flags[@]}" \
   -v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro \
   -v /home/data/code/:/code \
   --name=wechat-dev-tool \
+  --security-opt apparmor=unconfined \
   "${docker_args[@]}" \
   "$IMAGE" \
   "$@"

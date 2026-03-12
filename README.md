@@ -105,6 +105,8 @@
 > - GUI 转发依赖你的桌面环境；默认走 X11。若遇到黑屏/无法启动，通常需要先允许本地容器访问 X 服务（例如使用 `xhost`）。
 > - 配置与缓存会持久化到项目目录的 `./.docker-config/`。
 > - 如遇到“扩展出错/界面乱码”，通常是运行时缺少依赖库或中文字体；`docker/Dockerfile.runtime` 已包含常见依赖与中文字体（`fonts-noto-cjk` / `fonts-wqy-zenhei`）。
+> - 运行脚本默认透传宿主机 `ibus` 会话，适用于 `ibus + rime`；请确保宿主机当前桌面会话存在 `XDG_RUNTIME_DIR`、session dbus，以及可用的 `IBUS_ADDRESS`（通常桌面登录并启动 `ibus-daemon` 后默认具备）。
+> - Ubuntu 等启用 AppArmor 的系统下，为允许容器访问宿主机 session dbus，运行脚本会额外使用 `--security-opt apparmor=unconfined`。
 
 1. 构建运行镜像（第一次较慢）：
 

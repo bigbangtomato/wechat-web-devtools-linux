@@ -60,6 +60,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-color-emoji \
     fonts-dejavu-core \
     fonts-liberation \
+    # 输入法前端（透传宿主机 ibus）
+    ibus \
+    ibus-gtk3 \
     # GUI/NWJS/Chromium runtime deps（按需增补）
     libasound2 \
     libatk-bridge2.0-0 \
