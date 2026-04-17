@@ -1,5 +1,25 @@
 
-  
+
+
+
+
+
+# jxz
+
+
+
+使用`tools/run-wechat-devtools-docker.sh`命令启动。
+
+首次运行时，会自动构建容器并运行。
+
+后续执行`docker start wechat-dev-tool`即可启动。
+
+
+
+参见[[#方法0.5（全容器化运行：宿主机仅需 Docker）]]
+
+
+
 <div align="center">
 
   <img src="./res/icons/512x512.png" height="100px" width="100px"/>
@@ -17,7 +37,7 @@
 
 
   这是微信开发者工具 Linux版
-  
+
 
   <br>
 </div>
