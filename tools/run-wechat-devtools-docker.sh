@@ -95,6 +95,24 @@ mount_runtime_dir() {
   fi
 }
 
+resolve_xauth() {
+  local home_xauth="${HOME}/.Xauthority"
+  local session_xauth="${XAUTHORITY:-}"
+
+  # LightDM 下通常会维护稳定的 ~/.Xauthority，优先使用它，避免容器绑定到会失效的会话路径。
+  if [ -f "$home_xauth" ]; then
+    printf '%s\n' "$home_xauth"
+    return 0
+  fi
+
+  if [ -n "$session_xauth" ] && [ -f "$session_xauth" ]; then
+    printf '%s\n' "$session_xauth"
+    return 0
+  fi
+
+  return 1
+}
+
 if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -S "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]; then
   # Wayland（实验性）：部分环境仍可能需要 XWayland
   mount_runtime_dir
@@ -104,8 +122,7 @@ if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -S "${XDG
 fi
 
 if [ -n "${DISPLAY:-}" ] && [ -S "/tmp/.X11-unix/X0" ]; then
-  XAUTH="${XAUTHORITY:-${HOME}/.Xauthority}"
-  if [ -f "$XAUTH" ]; then
+  if XAUTH="$(resolve_xauth)"; then
     docker_args+=(
       -e "DISPLAY=${DISPLAY}"
       -e "XAUTHORITY=/tmp/.Xauthority"
